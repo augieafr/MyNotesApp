@@ -1,17 +1,20 @@
 package com.augie.mynotesapp
 
 import android.content.ContentValues
-import android.content.Intent
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.augie.mynotesapp.databinding.ActivityNoteAddUpdateBinding
-import com.augie.mynotesapp.db.DatabaseContract
+import com.augie.mynotesapp.db.DatabaseContract.NoteColumns.Companion.CONTENT_URI
+import com.augie.mynotesapp.db.DatabaseContract.NoteColumns.Companion.DATE
+import com.augie.mynotesapp.db.DatabaseContract.NoteColumns.Companion.DESCRIPTION
+import com.augie.mynotesapp.db.DatabaseContract.NoteColumns.Companion.TITLE
+import com.augie.mynotesapp.db.MappingHelper
 import com.augie.mynotesapp.db.NoteHelper
 import com.augie.mynotesapp.entity.Note
 import java.text.SimpleDateFormat
@@ -24,6 +27,7 @@ class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
     private var position: Int = 0
     private lateinit var noteHelper: NoteHelper
     private lateinit var binding: ActivityNoteAddUpdateBinding
+    private lateinit var uriWithId: Uri
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,10 +53,19 @@ class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
             actionBarTitle = "Ubah"
             btnTitle = "Update"
 
+            uriWithId = Uri.parse(CONTENT_URI.toString() + "/" + note?.id)
+
+            val cursor = contentResolver.query(uriWithId, null, null, null, null)
+            if (cursor != null) {
+                note = MappingHelper.mapCursorToObject(cursor)
+                cursor.close()
+            }
+
             note?.let {
                 binding.edtTitle.setText(it.title)
                 binding.edtDescription.setText(it.description)
             }
+
         } else {
             actionBarTitle = "Tambah"
             btnTitle = "Simpan"
@@ -75,41 +88,27 @@ class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
                 return
             }
 
-            note?.title = title
-            note?.description = description
-
-            val intent = Intent()
-            intent.putExtra(EXTRA_NOTE, note)
-            intent.putExtra(EXTRA_POSITION, position)
-
             val values = ContentValues()
-            values.put(DatabaseContract.NoteColumns.TITLE, title)
-            values.put(DatabaseContract.NoteColumns.DESCRIPTION, description)
+            values.put(TITLE, title)
+            values.put(DESCRIPTION, description)
 
             if (isEdit) {
-                val result = noteHelper.update(note?.id.toString(), values).toLong()
-                Log.d("Results", "Update: $result")
-                if (result > 0) {
-                    setResult(RESULT_UPDATE, intent)
-                    finish()
-                } else {
-                    Toast.makeText(this@NoteAddUpdateActivity, "Gagal update", Toast.LENGTH_SHORT)
-                        .show()
-                }
+                contentResolver.update(uriWithId, values, null, null)
+                Toast.makeText(
+                    this@NoteAddUpdateActivity,
+                    "Satu item berhasil diedit",
+                    Toast.LENGTH_LONG
+                ).show()
+                finish()
             } else {
-                note?.date = getCurrentDate()
-                values.put(DatabaseContract.NoteColumns.DATE, note?.date)
-                val result = noteHelper.insert(values)
-                Log.d("Results", "Insert: $result")
-
-                if (result > 0) {
-                    note?.id = result.toInt()
-                    setResult(RESULT_ADD, intent)
-                    finish()
-                } else {
-                    Toast.makeText(this@NoteAddUpdateActivity, "Gagal insert", Toast.LENGTH_SHORT)
-                        .show()
-                }
+                values.put(DATE, getCurrentDate())
+                contentResolver.insert(CONTENT_URI, values)
+                Toast.makeText(
+                    this@NoteAddUpdateActivity,
+                    "Satu item berhasil ditambahkan",
+                    Toast.LENGTH_LONG
+                ).show()
+                finish()
             }
         }
     }
@@ -155,20 +154,13 @@ class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
                 if (isDialogClose) {
                     finish()
                 } else {
-                    val result = noteHelper.deleteBy(note?.id.toString()).toLong()
-                    Log.d("Results", "Delete: $result")
-                    if (result > 0) {
-                        val intent = Intent()
-                        intent.putExtra(EXTRA_POSITION, position)
-                        setResult(RESULT_DELETE, intent)
-                        finish()
-                    } else {
-                        Toast.makeText(
-                            this@NoteAddUpdateActivity,
-                            "Gagal delete",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
+                    contentResolver.delete(uriWithId, null, null)
+                    Toast.makeText(
+                        this@NoteAddUpdateActivity,
+                        "Satu item berhasil dihapus",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    finish()
                 }
             }
             .setNegativeButton("Tidak") { dialog, _ ->
