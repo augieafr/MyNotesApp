@@ -6,7 +6,9 @@ import android.content.Context
 import android.content.UriMatcher
 import android.database.Cursor
 import android.net.Uri
+import androidx.core.content.contentValuesOf
 import com.augie.mynotesapp.db.DatabaseContract.AUTHORITY
+import com.augie.mynotesapp.db.DatabaseContract.NoteColumns.Companion.CONTENT_URI
 import com.augie.mynotesapp.db.DatabaseContract.NoteColumns.Companion.TABLE_NAME
 import com.augie.mynotesapp.db.NoteHelper
 
@@ -34,7 +36,13 @@ class NoteProvider : ContentProvider() {
     }
 
     override fun insert(uri: Uri, values: ContentValues?): Uri? {
-        TODO("Implement this to handle requests to insert a new row.")
+        val added: Long = when (NOTE) {
+            sUriMatcher.match(uri) -> noteHelper.insert(contentValuesOf())
+            else -> 0
+        }
+
+        context?.contentResolver?.notifyChange(CONTENT_URI, null)
+        return Uri.parse("$CONTENT_URI/$added")
     }
 
     override fun update(
