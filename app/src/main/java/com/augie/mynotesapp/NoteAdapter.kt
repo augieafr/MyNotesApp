@@ -15,9 +15,7 @@ class NoteAdapter(private val activity: Activity) :
 
     var listNote = ArrayList<Note>()
         set(listNote) {
-            if (listNote.size > 0) {
-                this.listNote.clear()
-            }
+            this.listNote.clear()
             this.listNote.addAll(listNote)
             notifyDataSetChanged()
         }
