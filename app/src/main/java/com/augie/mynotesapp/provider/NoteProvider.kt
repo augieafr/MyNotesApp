@@ -49,7 +49,13 @@ class NoteProvider : ContentProvider() {
         uri: Uri, values: ContentValues?, selection: String?,
         selectionArgs: Array<String>?
     ): Int {
-        TODO("Implement this to handle requests to update one or more rows.")
+        val updated: Int = when (NOTE_ID) {
+            sUriMatcher.match(uri) -> noteHelper.update(uri.lastPathSegment.toString(), values)
+            else -> 0
+        }
+
+        context?.contentResolver?.notifyChange(CONTENT_URI, null)
+        return updated
     }
 
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int {
