@@ -25,7 +25,6 @@ class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
     private var isEdit = false
     private var note: Note? = null
     private var position: Int = 0
-    private lateinit var noteHelper: NoteHelper
     private lateinit var binding: ActivityNoteAddUpdateBinding
     private lateinit var uriWithId: Uri
 
@@ -34,11 +33,7 @@ class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
         binding = ActivityNoteAddUpdateBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        noteHelper = NoteHelper.getInstance(applicationContext)
-        noteHelper.open()
-
         note = intent.getParcelableExtra(EXTRA_NOTE)
-
         if (note != null) {
             position = intent.getIntExtra(EXTRA_POSITION, 0)
             isEdit = true
@@ -181,11 +176,6 @@ class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
         const val EXTRA_POSITION = "extra_position"
         const val EXTRA_NOTE = "extra_note"
 
-        const val REQUEST_ADD = 100
-        const val RESULT_ADD = 101
-        const val REQUEST_UPDATE = 200
-        const val RESULT_UPDATE = 201
-        const val RESULT_DELETE = 301
         const val ALERT_DIALOG_CLOSE = 10
         const val ALERT_DIALOG_DELETE = 20
     }
