@@ -36,8 +36,9 @@ class NoteProvider : ContentProvider() {
     }
 
     override fun insert(uri: Uri, values: ContentValues?): Uri? {
+        // clear
         val added: Long = when (NOTE) {
-            sUriMatcher.match(uri) -> noteHelper.insert(contentValuesOf())
+            sUriMatcher.match(uri) -> noteHelper.insert(values)
             else -> 0
         }
 
