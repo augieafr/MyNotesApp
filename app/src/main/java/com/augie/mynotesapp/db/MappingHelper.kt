@@ -24,11 +24,11 @@ object MappingHelper {
         var note = Note()
         notesCursor?.apply {
             moveToFirst()
-            val id = getInt(getColumnIndexOrThrow(DatabaseContract.NoteColumns._ID))
-            val title = getString(getColumnIndexOrThrow(DatabaseContract.NoteColumns.TITLE))
+            val id = getInt(getColumnIndexOrThrow(NoteColumns._ID))
+            val title = getString(getColumnIndexOrThrow(NoteColumns.TITLE))
             val description =
-                getString(getColumnIndexOrThrow(DatabaseContract.NoteColumns.DESCRIPTION))
-            val date = getString(getColumnIndexOrThrow(DatabaseContract.NoteColumns.DATE))
+                getString(getColumnIndexOrThrow(NoteColumns.DESCRIPTION))
+            val date = getString(getColumnIndexOrThrow(NoteColumns.DATE))
             note = Note(id, title, description, date)
         }
         return note
