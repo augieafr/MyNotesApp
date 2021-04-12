@@ -1,11 +1,15 @@
 package com.augie.mynotesapp
 
 import android.content.Intent
+import android.database.ContentObserver
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
+import android.os.HandlerThread
 import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.augie.mynotesapp.databinding.ActivityMainBinding
+import com.augie.mynotesapp.db.DatabaseContract.NoteColumns.Companion.CONTENT_URI
 import com.augie.mynotesapp.db.MappingHelper
 import com.augie.mynotesapp.db.NoteHelper
 import com.augie.mynotesapp.entity.Note
@@ -37,6 +41,18 @@ class MainActivity : AppCompatActivity() {
             startActivityForResult(intent, NoteAddUpdateActivity.REQUEST_ADD)
         }
 
+        val handlerThread = HandlerThread("DataObserver")
+        handlerThread.start()
+        val handler = Handler(handlerThread.looper)
+
+        val myObserver = object : ContentObserver(handler) {
+            override fun onChange(selfChange: Boolean) {
+                loadAsync()
+            }
+        }
+
+        contentResolver.registerContentObserver(CONTENT_URI, true, myObserver)
+
         if (savedInstanceState == null) {
             loadAsync()
         } else {
@@ -55,11 +71,9 @@ class MainActivity : AppCompatActivity() {
     private fun loadAsync() {
         GlobalScope.launch(Dispatchers.Main) {
             binding.progressBar.visibility = View.VISIBLE
-            val noteHelper = NoteHelper.getInstance(applicationContext)
-            noteHelper.open()
 
             val deferredNotes = async(Dispatchers.IO) {
-                val cursor = noteHelper.querySelectAll()
+                val cursor = contentResolver.query(CONTENT_URI, null, null, null, null)
                 MappingHelper.mapCursorToArrayList(cursor)
             }
 
@@ -71,46 +85,6 @@ class MainActivity : AppCompatActivity() {
             } else {
                 adapter.listNote = ArrayList()
                 showSnackbarMessage("Tidak ada data saat ini")
-            }
-
-            noteHelper.close()
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (data != null) {
-            when (requestCode) {
-                NoteAddUpdateActivity.REQUEST_ADD -> if (resultCode == NoteAddUpdateActivity.RESULT_ADD) {
-                    val note =
-                        data.getParcelableExtra<Note>(NoteAddUpdateActivity.EXTRA_NOTE) as Note
-
-                    adapter.addItem(note)
-                    binding.rvNotes.smoothScrollToPosition(adapter.itemCount - 1)
-
-                    showSnackbarMessage("Satu item ditambahkan")
-                }
-
-                NoteAddUpdateActivity.REQUEST_UPDATE -> {
-                    val position = data.getIntExtra(NoteAddUpdateActivity.EXTRA_POSITION, 0)
-                    when (resultCode) {
-                        NoteAddUpdateActivity.RESULT_UPDATE -> {
-                            val note =
-                                data.getParcelableExtra<Note>(NoteAddUpdateActivity.EXTRA_NOTE) as Note
-
-                            adapter.updateItem(position, note)
-                            binding.rvNotes.smoothScrollToPosition(position)
-
-                            showSnackbarMessage("${note.title} berhasil diubah")
-                        }
-
-                        NoteAddUpdateActivity.RESULT_DELETE -> {
-                            adapter.deleteItem(position)
-                            showSnackbarMessage("Note berhasil dihapus")
-                        }
-                    }
-                }
             }
         }
     }
