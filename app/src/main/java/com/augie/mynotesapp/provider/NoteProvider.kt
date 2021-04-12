@@ -2,6 +2,7 @@ package com.augie.mynotesapp.provider
 
 import android.content.ContentProvider
 import android.content.ContentValues
+import android.content.Context
 import android.content.UriMatcher
 import android.database.Cursor
 import android.net.Uri
@@ -27,7 +28,9 @@ class NoteProvider : ContentProvider() {
     }
 
     override fun onCreate(): Boolean {
-        TODO("Implement this to initialize your content provider on startup.")
+        noteHelper = NoteHelper.getInstance(context as Context)
+        noteHelper.open()
+        return true
     }
 
     override fun query(
