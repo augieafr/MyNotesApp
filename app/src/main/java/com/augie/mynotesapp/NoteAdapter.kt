@@ -69,12 +69,8 @@ class NoteAdapter(private val activity: Activity) :
                                 val intent = Intent(activity, NoteAddUpdateActivity::class.java)
                                 intent.putExtra(NoteAddUpdateActivity.EXTRA_POSITION, position)
                                 intent.putExtra(NoteAddUpdateActivity.EXTRA_NOTE, note)
-                                activity.startActivityForResult(
-                                    intent,
-                                    NoteAddUpdateActivity.REQUEST_UPDATE
-                                )
+                                activity.startActivity(intent)
                             }
-
                         })
                 )
             }
